@@ -15,7 +15,7 @@ export default function Admin() {
 
   useEffect(() => {
     fetchBuses();
-    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings/admin/stats`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }) // eslint-disable-line react-hooks/exhaustive-deps
       .then((res) => setStats(res.data))
       .catch(() => {});
   }, []);

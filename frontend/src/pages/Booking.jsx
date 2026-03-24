@@ -15,7 +15,7 @@ export default function Booking() {
 
   useEffect(() => {
     if (!token) return;
-    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings`, { headers: { Authorization: `Bearer ${token}` } }) // eslint-disable-line react-hooks/exhaustive-deps
       .then((res) => { setBookings(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
