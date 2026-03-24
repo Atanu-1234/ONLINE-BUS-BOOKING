@@ -7,6 +7,9 @@ export default function SeatSelection() {
   const navigate = useNavigate();
   const location = useLocation();
   const travelDate = location.state?.date || "";
+  const travelFrom  = location.state?.from || "";
+  const travelTo    = location.state?.to   || "";
+  const calculatedPrice = location.state?.calculatedPrice || null;
   const [bus, setBus] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
@@ -45,7 +48,8 @@ export default function SeatSelection() {
   const filledPct = Math.round((bookedCount / totalSeats) * 100);
   const isAlmostFull = availableCount <= 5 && availableCount > 0;
   const isFull = availableCount === 0;
-  const totalAmount = selectedSeats.length * bus.price;
+  const pricePerSeat = calculatedPrice || (bus ? bus.price : 0);
+  const totalAmount = selectedSeats.length * pricePerSeat;
 
   // progress bar color based on fill level
   const barColor = filledPct >= 80 ? "from-red-500 to-pink-500"
@@ -60,15 +64,15 @@ export default function SeatSelection() {
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white text-center mb-6 shadow-xl">
           <h2 className="text-3xl font-extrabold">{bus.name}</h2>
           <div className="flex justify-center items-center gap-3 mt-3 text-lg">
-            <span className="bg-white/20 border border-white/30 px-4 py-1 rounded-full font-semibold">{bus.from}</span>
+            <span className="bg-white/20 border border-white/30 px-4 py-1 rounded-full font-semibold">{travelFrom || bus.from}</span>
             <span className="text-yellow-300 font-bold text-2xl">→</span>
-            <span className="bg-white/20 border border-white/30 px-4 py-1 rounded-full font-semibold">{bus.to}</span>
+            <span className="bg-white/20 border border-white/30 px-4 py-1 rounded-full font-semibold">{travelTo || bus.to}</span>
           </div>
           <div className="flex justify-center gap-6 mt-3 text-sm text-white/80">
             <span>📅 {bus.date === "everyday" ? <span className="text-green-300 font-bold">Every Day</span> : travelDate || bus.date}</span>
             <span>🕐 {bus.startTime}</span>
           </div>
-          <p className="text-yellow-300 font-extrabold text-xl mt-2">₹{bus.price} per seat</p>
+          <p className="text-yellow-300 font-extrabold text-xl mt-2">₹{pricePerSeat} per seat{calculatedPrice && calculatedPrice !== bus.price ? <span className="text-white/60 text-sm font-normal ml-2">(full route ₹{bus.price})</span> : ""}</p>
         </div>
 
         {/* AVAILABILITY COUNTER CARD */}
@@ -184,11 +188,11 @@ export default function SeatSelection() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-500">{selectedSeats.length} seat(s) × ₹{bus.price}</p>
+                  <p className="text-sm text-gray-500">{selectedSeats.length} seat(s) × ₹{pricePerSeat}</p>
                   <p className="text-4xl font-extrabold text-gray-800">₹{totalAmount}</p>
                 </div>
               </div>
-              <button onClick={() => navigate("/payment", { state: { bus, selectedSeats, totalAmount, date: travelDate } })}
+              <button onClick={() => navigate("/payment", { state: { bus, selectedSeats, totalAmount, date: travelDate, from: travelFrom, to: travelTo, pricePerSeat } })}
                 className="mt-4 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3.5 rounded-xl font-extrabold text-lg transition shadow-lg">
                 Proceed to Payment 💳
               </button>

@@ -131,7 +131,7 @@ export default function Home() {
               <div key={bus._id} className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl border ${a.border} transition duration-300 hover:-translate-y-1 flex flex-col`}>
                 <div className="relative">
                   <img
-                    src={bus.image ? `${process.env.REACT_APP_API_URL}/uploads/${bus.image}` : "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957"}
+                    src={bus.image ? (bus.image.startsWith("http") ? bus.image : `${process.env.REACT_APP_API_URL}/uploads/${bus.image}`) : "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957"}
                     alt="bus"
                     className="h-40 w-full object-cover"
                     onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957"; }}

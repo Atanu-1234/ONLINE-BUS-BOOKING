@@ -5,7 +5,7 @@ import axios from "axios";
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bus, selectedSeats, totalAmount, date } = location.state || {};
+  const { bus, selectedSeats, totalAmount, date, from, to, pricePerSeat } = location.state || {};
   const [cardNumber, setCardNumber] = useState("");
   const [name, setName] = useState("");
   const [cvv, setCvv] = useState("");
@@ -20,7 +20,7 @@ export default function Payment() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/bookings`, {
-        busId: bus._id, busName: bus.name, from: bus.from, to: bus.to,
+        busId: bus._id, busName: bus.name, from: from || bus.from, to: to || bus.to,
         seats: selectedSeats, totalAmount, journeyDate: date || bus.date, startTime: bus.startTime,
       }, { headers: { Authorization: `Bearer ${token}` } });
       navigate("/ticket", { state: { booking: res.data, bus, selectedSeats, totalAmount, date: date || bus.date } });
@@ -44,7 +44,7 @@ export default function Payment() {
               </div>
               <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
                 <p className="text-xs text-purple-500 uppercase font-bold mb-1">Route</p>
-                <p className="font-bold text-gray-800">{bus.from} <span className="text-indigo-500">→</span> {bus.to}</p>
+                <p className="font-bold text-gray-800">{from || bus.from} <span className="text-indigo-500">→</span> {to || bus.to}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-orange-50 border border-orange-100 rounded-xl p-3">
@@ -65,7 +65,7 @@ export default function Payment() {
                 </div>
               </div>
               <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-center text-white shadow-lg">
-                <p className="text-sm font-bold text-white/80">{selectedSeats.length} seat(s) × ₹{bus.price}</p>
+                <p className="text-sm font-bold text-white/80">{selectedSeats.length} seat(s) × ₹{pricePerSeat || bus.price}</p>
                 <p className="text-4xl font-extrabold">₹{totalAmount}</p>
               </div>
             </div>

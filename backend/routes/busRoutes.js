@@ -1,24 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const Bus = require("../models/Bus");
-const multer = require("multer");
 const auth = require("../middleware/auth");
-
-const storage = multer.diskStorage({
-  destination: "uploads/",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage });
+const { upload } = require("../config/cloudinary");
 
 // ADD BUS (PROTECTED)
 router.post("/", auth, upload.single("image"), async (req, res) => {
   try {
-    const { name, from, to, price, totalSeats, date, startTime } = req.body;
+    const { name, from, to, stops, price, totalSeats, date, startTime } = req.body;
+    const stopsArr = stops ? (Array.isArray(stops) ? stops : JSON.parse(stops)) : [from, to];
     const bus = new Bus({
-      name, from, to, price, totalSeats, date, startTime,
-      image: req.file ? req.file.filename : "",
+      name, from: stopsArr[0], to: stopsArr[stopsArr.length - 1],
+      stops: stopsArr, price, totalSeats, date, startTime,
+      image: req.file ? req.file.path : "",
     });
     await bus.save();
     res.json(bus);
@@ -27,26 +21,16 @@ router.post("/", auth, upload.single("image"), async (req, res) => {
   }
 });
 
-// GET ALL BUSES with optional filters
-router.get("/", async (req, res) => {
+// GET ALL UNIQUE CITIES
+router.get("/cities", async (req, res) => {
   try {
-    const { from, to, date } = req.query;
-    let query = {};
-    if (from) query.from = new RegExp(from, "i");
-    if (to) query.to = new RegExp(to, "i");
-
-    if (date) {
-      // return buses that match the exact date OR run everyday
-      const routeQuery = from || to ? query : {};
-      const buses = await Bus.find({
-        ...routeQuery,
-        $or: [{ date: date }, { date: "everyday" }],
-      });
-      return res.json(buses);
-    }
-
-    const buses = await Bus.find(query);
-    res.json(buses);
+    const buses = await Bus.find({}, "stops from to");
+    const citySet = new Set();
+    buses.forEach((b) => {
+      if (b.stops && b.stops.length) b.stops.forEach((s) => citySet.add(s.trim()));
+      else { if (b.from) citySet.add(b.from.trim()); if (b.to) citySet.add(b.to.trim()); }
+    });
+    res.json([...citySet].sort());
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -71,7 +55,31 @@ router.get("/availability", async (req, res) => {
   }
 });
 
-// GET SINGLE BUS
+// GET ALL BUSES with optional filters
+router.get("/", async (req, res) => {
+  try {
+    const { from, to, date } = req.query;
+    let buses = await Bus.find();
+
+    if (from && to) {
+      buses = buses.filter((b) => {
+        const stops = b.stops && b.stops.length ? b.stops : [b.from, b.to];
+        const fi = stops.findIndex((s) => s.toLowerCase() === from.toLowerCase());
+        const ti = stops.findIndex((s) => s.toLowerCase() === to.toLowerCase());
+        return fi !== -1 && ti !== -1 && fi < ti;
+      });
+    }
+
+    if (date) {
+      buses = buses.filter((b) => b.date === date || b.date === "everyday");
+    }
+
+    res.json(buses);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   try {
     const bus = await Bus.findById(req.params.id);

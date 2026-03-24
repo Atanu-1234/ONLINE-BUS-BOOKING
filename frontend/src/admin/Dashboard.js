@@ -4,8 +4,9 @@ import axios from "axios";
 export default function Admin() {
   const [buses, setBuses] = useState([]);
   const [form, setForm] = useState({
-    name: "", from: "", to: "", price: "", seats: "", date: "", dateType: "specific", startTime: "", image: null,
+    name: "", stops: [], price: "", seats: "", date: "", dateType: "specific", startTime: "", image: null,
   });
+  const [stopInput, setStopInput] = useState("");
   const [preview, setPreview] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ show: false, busId: null, busName: "" });
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -45,8 +46,7 @@ export default function Admin() {
     try {
       const formData = new FormData();
       formData.append("name", form.name);
-      formData.append("from", form.from);
-      formData.append("to", form.to);
+      formData.append("stops", JSON.stringify(form.stops));
       formData.append("price", form.price);
       formData.append("totalSeats", form.seats);
       formData.append("date", form.dateType === "everyday" ? "everyday" : form.date);
@@ -58,7 +58,8 @@ export default function Admin() {
       });
 
       alert("Bus Added Successfully ✅");
-      setForm({ name: "", from: "", to: "", price: "", seats: "", date: "", dateType: "specific", startTime: "", image: null });
+      setForm({ name: "", stops: [], price: "", seats: "", date: "", dateType: "specific", startTime: "", image: null });
+      setStopInput("");
       setPreview(null);
       fetchBuses();
     } catch (err) {
@@ -175,8 +176,51 @@ export default function Admin() {
 
           <form onSubmit={handleAddBus} className="grid md:grid-cols-3 gap-5">
             <input type="text" name="name" placeholder="Bus Name" value={form.name} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition" required />
-            <input type="text" name="from" placeholder="From" value={form.from} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition" required />
-            <input type="text" name="to" placeholder="To" value={form.to} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition" required />
+
+            {/* STOPS BUILDER */}
+            <div className="col-span-2">
+              <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Route Stops <span className="text-gray-400 font-normal normal-case">(add in order: origin → ... → destination)</span></label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={stopInput}
+                  onChange={(e) => setStopInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = stopInput.trim();
+                      if (val && !form.stops.includes(val)) setForm({ ...form, stops: [...form.stops, val] });
+                      setStopInput("");
+                    }
+                  }}
+                  placeholder="Type a city and press Enter"
+                  className="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                />
+                <button type="button"
+                  onClick={() => {
+                    const val = stopInput.trim();
+                    if (val && !form.stops.includes(val)) setForm({ ...form, stops: [...form.stops, val] });
+                    setStopInput("");
+                  }}
+                  className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-bold transition">
+                  + Add
+                </button>
+              </div>
+              {form.stops.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-3 bg-gray-50 border-2 border-gray-200 rounded-lg min-h-[44px]">
+                  {form.stops.map((stop, i) => (
+                    <span key={i} className="flex items-center gap-1 bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full text-sm font-semibold">
+                      {i === 0 && <span className="text-green-600 text-xs">●</span>}
+                      {i > 0 && i < form.stops.length - 1 && <span className="text-yellow-500 text-xs">●</span>}
+                      {i === form.stops.length - 1 && i !== 0 && <span className="text-red-500 text-xs">●</span>}
+                      {stop}
+                      <button type="button" onClick={() => setForm({ ...form, stops: form.stops.filter((_, j) => j !== i) })} className="ml-1 text-indigo-400 hover:text-red-500 font-bold">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {form.stops.length < 2 && <p className="text-xs text-red-400 mt-1">Add at least 2 stops (origin and destination)</p>}
+            </div>
             <input type="number" name="price" placeholder="Price (₹)" value={form.price} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition" required />
             <input type="number" name="seats" placeholder="Total Seats" value={form.seats} onChange={handleChange} className="p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition" required />
 
@@ -203,7 +247,7 @@ export default function Admin() {
               </div>
             )}
 
-            <button type="submit" className="col-span-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl py-3 font-bold hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all">
+            <button type="submit" disabled={form.stops.length < 2} className="col-span-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl py-3 font-bold hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
               ✅ Add Bus
             </button>
           </form>
@@ -237,7 +281,7 @@ export default function Admin() {
                   <tr key={bus._id} className={`border-b transition-colors ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-indigo-50`}>
                     <td className="p-4">
                       {bus.image && (
-                        <img src={`${process.env.REACT_APP_API_URL}/uploads/${bus.image}`} alt="Bus" className="w-24 h-16 object-cover rounded-lg shadow-md" />
+                        <img src={bus.image ? (bus.image.startsWith("http") ? bus.image : `${process.env.REACT_APP_API_URL}/uploads/${bus.image}`) : ""} alt="Bus" className="w-24 h-16 object-cover rounded-lg shadow-md" />
                       )}
                     </td>
                     <td className="p-4 font-bold text-gray-800">{bus.name}</td>
