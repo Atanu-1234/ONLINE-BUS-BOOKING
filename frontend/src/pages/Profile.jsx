@@ -10,7 +10,8 @@ export default function Profile() {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, { headers: { Authorization: `Bearer ${token}` } }) // eslint-disable-line react-hooks/exhaustive-deps
+    const token = localStorage.getItem("token");
+    axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => { setUser(res.data); setForm({ name: res.data.name, email: res.data.email, password: "" }); });
 
     axios.get(`${process.env.REACT_APP_API_URL}/api/bookings`, { headers: { Authorization: `Bearer ${token}` } })

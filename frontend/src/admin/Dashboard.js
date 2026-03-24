@@ -11,11 +11,10 @@ export default function Admin() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [stats, setStats] = useState(null);
   const [availability, setAvailability] = useState({});
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
+    const token = localStorage.getItem("token");
     fetchBuses();
-    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }) // eslint-disable-line react-hooks/exhaustive-deps
+    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings/admin/stats`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => setStats(res.data))
       .catch(() => {});
   }, []);
@@ -55,7 +54,7 @@ export default function Admin() {
       formData.append("image", form.image);
 
       await axios.post(`${process.env.REACT_APP_API_URL}/api/buses`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
       alert("Bus Added Successfully ✅");
@@ -71,7 +70,7 @@ export default function Admin() {
   const handleDelete = async () => {
     try {
       await axios.delete(`${process.env.REACT_APP_API_URL}/api/buses/${deleteModal.busId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setDeleteModal({ show: false, busId: null, busName: "" });
       fetchBuses();

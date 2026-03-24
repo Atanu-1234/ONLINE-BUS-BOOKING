@@ -11,11 +11,10 @@ export default function Booking() {
   const [comment, setComment] = useState("");
   const [ratedBookings, setRatedBookings] = useState(() => JSON.parse(localStorage.getItem("ratedBookings") || "[]"));
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
+    const token = localStorage.getItem("token");
     if (!token) return;
-    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings`, { headers: { Authorization: `Bearer ${token}` } }) // eslint-disable-line react-hooks/exhaustive-deps
+    axios.get(`${process.env.REACT_APP_API_URL}/api/bookings`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => { setBookings(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
@@ -23,7 +22,7 @@ export default function Booking() {
   const handleCancel = async () => {
     try {
       const res = await axios.patch(`${process.env.REACT_APP_API_URL}/api/bookings/cancel/${cancelModal.bookingId}`,
-        {}, { headers: { Authorization: `Bearer ${token}` } });
+        {}, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       setBookings((prev) => prev.map((b) => b._id === cancelModal.bookingId ? res.data : b));
       setCancelModal({ show: false, bookingId: null, busName: "" });
     } catch (err) {
@@ -35,7 +34,7 @@ export default function Booking() {
     if (!stars) { alert("Please select a star rating"); return; }
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/buses/${ratingModal.busId}/rate`,
-        { stars, comment }, { headers: { Authorization: `Bearer ${token}` } });
+        { stars, comment }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       const updated = [...ratedBookings, ratingModal.bookingId];
       setRatedBookings(updated);
       localStorage.setItem("ratedBookings", JSON.stringify(updated));
